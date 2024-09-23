@@ -1,0 +1,34 @@
+# 获取屏幕分辨率
+Add-Type -AssemblyName System.Windows.Forms
+$Height = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Height
+$Width = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Width
+$halfHeight = $Height / 2
+$halfWidth = $Width / 2
+
+# 启动Chrome并放置在右侧
+Start-Process chrome "http://localhost:8080"  # 替换为你预览页面的URL
+Start-Sleep -Seconds 2
+
+# 获取Chrome窗口并调整大小和位置
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class User32 {
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    public static IntPtr HWND_TOP = new IntPtr(0);
+    public const int SWP_SHOWWINDOW = 0x0040;
+}
+"@
+
+$chromeWindow = [User32]::FindWindow("Chrome_WidgetWin_1", "New Tab - Google Chrome")
+[User32]::SetWindowPos($chromeWindow, [User32]::HWND_TOP, $halfWidth, 0, $halfWidth, $Height, [User32]::SWP_SHOWWINDOW)
+
+# 获取当前的iTerm（在Windows上是Windows Terminal或其他终端模拟器）并调整大小和位置
+$terminalWindow = Get-Process -Name "wt"  # 假设你使用Windows Terminal
+[User32]::SetWindowPos($terminalWindow.MainWindowHandle, [User32]::HWND_TOP, 0, 0, $halfWidth, $Height, [User32]::SWP_SHOWWINDOW)
+
